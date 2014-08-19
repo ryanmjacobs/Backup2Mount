@@ -20,10 +20,12 @@
 MNT_LOCATION="/mnt/EXT4_Storage/"
 BAK_LOCATION="/mnt/EXT4_Storage/Delta_Home_Backup/"
 
-function log() { printf "%s - %s\n" "$(date +%F_%T)" "$@" | tee -a "$LOGFILE"; }
+function log()        { printf "%s - %s\n"        "$(date +%F_%T)" "$@" | tee -a "$LOGFILE"; }
+function log_notify() { printf "%s - %s\n"        "$(date +%F_%T)" "$@" | tee -a "$LOGFILE"; notify-send -t 15000 -u normal   "Backup2Mount" "$@"; }
+function log_error()  { printf "%s - ERROR: %s\n" "$(date +%F_%T)" "$@" | tee -a "$LOGFILE"; notify-send -t 30000 -u critical "Backup2Mount" "ERROR: $@"; }
 
 function bak() {
-    log "Beginning backup of $1..."
+    log_notify "Beginning backup of $1..."
     start_time=$(date +%s.%N)
     /usr/bin/rsync -auz --delete "$1" "$BAK_LOCATION"
     bak_ret=$?
@@ -31,11 +33,10 @@ function bak() {
     time_diff=$(echo "$end_time - $start_time" | bc)
 
     if [ $bak_ret -eq 0 ]; then
-        log "Backup of $1 completed successfully."
+        log_notify "Backup of $1 completed successfully. (took $time_diff)"
     else
-        log "Error: Backup of $1 failed."
+        log_error "Backup of $1 failed. (took $time_diff)"
     fi
-    log "Backup of $1 took $time_diff."
 }
 
 function checks() {
@@ -52,7 +53,7 @@ function checks() {
     required_programs=( "tee" "date" "mountpoint" "printf" "rsync" "bc" )
     for p in "${required_programs[@]}"; do
         if ! hash "$p" &>/dev/null; then
-            log "Error: $p is required. Program check failed."
+            log_error "$p is required. Program check failed."
             exit 1
         fi
     done
@@ -61,7 +62,7 @@ function checks() {
     # Check if MNT_LOCATION is mounted
     mountpoint -q $MNT_LOCATION
     if [ $? == 1 ]; then
-        log "Error: $MNT_LOCATION is not mounted! Quitting."
+        log_error "$MNT_LOCATION is not mounted! Quitting."
         exit 1
     else
         log "$MNT_LOCATION is mounted."
@@ -75,6 +76,6 @@ if mkdir $LOCKFILE &>/dev/null; then
     bak "/home/ryan/working"
     rmdir $LOCKFILE
 else
-    log "Error: There is already a lockfile for Backup2Mount. If you're sure it is not already running, you can remove /var/lock/Backup2Mount.lock"
+    log_error "There is already a lockfile for Backup2Mount. If you're sure it is not already running, you can remove /var/lock/Backup2Mount.lock"
     exit 1
 fi
