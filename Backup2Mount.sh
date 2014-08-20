@@ -25,7 +25,7 @@ function log_notify() { printf "%s - %s\n"        "$(date +%F_%T)" "$@" | tee -a
 function log_error()  { printf "%s - ERROR: %s\n" "$(date +%F_%T)" "$@" | tee -a "$LOGFILE"; notify-send -t 30000 -u critical "Backup2Mount" "ERROR: $@"; }
 
 function bak() {
-    log_notify "Beginning backup of $1..."
+    log_notify "Backing up: $1 ..."
     start_time=$(date +%s.%N)
     /usr/bin/rsync -auz --delete "$1" "$BAK_LOCATION"
     bak_ret=$?
@@ -33,9 +33,9 @@ function bak() {
     time_diff=$(echo "$end_time - $start_time" | bc)
 
     if [ $bak_ret -eq 0 ]; then
-        log_notify "Backup of $1 completed successfully. (took $time_diff)"
+        log_notify "Backup of $1 complete!\n(took $time_diff)"
     else
-        log_error "Backup of $1 failed. (took $time_diff)"
+        log_error "Backup of $1 failed.\n(took $time_diff)"
     fi
 }
 
@@ -72,10 +72,13 @@ function checks() {
 ### Mainline ###
 checks
 if mkdir $LOCKFILE &>/dev/null; then
+    log "Successfully created lock."
     bak "/home/ryan/storage"
     bak "/home/ryan/working"
-    rmdir $LOCKFILE
+    rmdir $LOCKFILE &&\
+        log       "Successfully removed lock." ||\
+        log_error "Was unable to remove lock."
 else
-    log_error "There is already a lockfile for Backup2Mount. If you're sure it is not already running, you can remove /var/lock/Backup2Mount.lock"
+    log_error "There is already a lock for Backup2Mount.\n\nIf you're sure that it is not already running, you can remove\n/var/lock/Backup2Mount.lock"
     exit 1
 fi
