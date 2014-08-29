@@ -7,7 +7,8 @@
 # If backup fails, check logfile for errors: /var/log/Backup2Mount.log
 #
 # Maintained By: Ryan Jacobs <ryan.mjacobs@gmail.com>
-# August 18, 2014 -> Initial creation.
+# August 18, 2014 -> File creation.
+# August 28, 2014 -> Remove function keyword for compatibility with other shells.
 #
 # Bugs:
 #   - Running the bash function `bak "/home/user/"` will cause the contents of
@@ -20,11 +21,11 @@
 MNT_LOCATION="/mnt/EXT4_Storage/"
 BAK_LOCATION="/mnt/EXT4_Storage/Delta_Home_Backup/"
 
-function log()        { printf "%s - %s\n"        "$(date +%F_%T)" "$@" | tee -a "$LOGFILE"; }
-function log_notify() { printf "%s - %s\n"        "$(date +%F_%T)" "$@" | tee -a "$LOGFILE"; notify-send -t 15000 -u normal   "Backup2Mount" "$@"; }
-function log_error()  { printf "%s - ERROR: %s\n" "$(date +%F_%T)" "$@" | tee -a "$LOGFILE"; notify-send -t 30000 -u critical "Backup2Mount" "ERROR: $@"; }
+log()        { printf "%s - %s\n"        "$(date +%F_%T)" "$@" | tee -a "$LOGFILE"; }
+log_notify() { printf "%s - %s\n"        "$(date +%F_%T)" "$@" | tee -a "$LOGFILE"; notify-send -t 15000 -u normal   "Backup2Mount" "$@"; }
+log_error()  { printf "%s - ERROR: %s\n" "$(date +%F_%T)" "$@" | tee -a "$LOGFILE"; notify-send -t 30000 -u critical "Backup2Mount" "ERROR: $@"; }
 
-function bak() {
+bak() {
     log_notify "Backing up: $1 ..."
     start_time=$(date +%s.%N)
     /usr/bin/rsync -auz --delete "$1" "$BAK_LOCATION"
@@ -39,7 +40,7 @@ function bak() {
     fi
 }
 
-function checks() {
+checks() {
     # Check for root user
     if [ "$EUID" -ne 0 ]; then
         echo "Please run as root."
