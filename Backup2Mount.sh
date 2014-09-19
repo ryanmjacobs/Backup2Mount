@@ -13,7 +13,7 @@
 # Bugs:
 #   - Running the bash function `bak "/home/user/"` will cause the contents of
 #     the directory user to backed up and not the whole folder.
-#     This is because of rsync.
+#     This is because of rsync. MAKE SURE TO OMIT EXTRA SLASH.
 ################################################################################
 
      LOGFILE="/var/log/Backup2Mount.log"
