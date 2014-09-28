@@ -9,6 +9,7 @@
 # Maintained By: Ryan Jacobs <ryan.mjacobs@gmail.com>
 # August 18, 2014 -> File creation.
 # August 28, 2014 -> Remove function keyword for compatibility with other shells.
+#  Sept. 27, 2014 -> Add QUIET variable. Improve log functions.
 #
 # Bugs:
 #   - Running the bash function `bak "/home/user/"` will cause the contents of
@@ -16,17 +17,44 @@
 #     This is because of rsync. MAKE SURE TO OMIT EXTRA SLASH.
 ################################################################################
 
+       QUIET=false
      LOGFILE="/var/log/Backup2Mount.log"
     LOCKFILE="/var/lock/Backup2Mount.lock"
 MNT_LOCATION="/mnt/EXT4_Storage/"
 BAK_LOCATION="/mnt/EXT4_Storage/Delta_Home_Backup/"
 
-log()        { printf "%s - %s\n"        "$(date +%F_%T)" "$@" | tee -a "$LOGFILE"; }
-log_notify() { printf "%s - %s\n"        "$(date +%F_%T)" "$@" | tee -a "$LOGFILE"; notify-send -t 15000 -u normal   "Backup2Mount" "$@"; }
-log_error()  { printf "%s - ERROR: %s\n" "$(date +%F_%T)" "$@" | tee -a "$LOGFILE"; notify-send -t 30000 -u critical "Backup2Mount" "ERROR: $@"; }
+# Usage: log [error] <message>
+# Write message to log
+log() {
+    if [ $# -ge 2 ] && [ "$1" == "error" ]; then
+        printf "%s - ERROR: %s\n" "$(date +%F_%T)" "$2" | tee -a "$LOGFILE"
+    else
+        printf "%s - %s\n" "$(date +%F_%T)" "$1" | tee -a "$LOGFILE"
+    fi
+}
 
+# Usage: notify [error] <message>
+# Results in a notify-send and a call to log
+notify() {
+    if [ $# -ge 2 ] && [ "$1" == "error" ]; then
+        string="$2"
+        msglevel="critical"
+        log error "$string"
+    else
+        string="$1"
+        msglevel="normal"
+        log "$string"
+    fi
+
+    if ! $QUIET; then
+        notify-send -t 15000 -u $msglevel "Backup2Mount" "$string"
+    fi
+}
+
+# Usage: bak <folder>
+# Backup folder to $BAK_LOCATION
 bak() {
-    log_notify "Backing up: $1 ..."
+    log "Backing up: $1 ..."
     start_time=$(date +%s.%N)
     /usr/bin/rsync -auz --delete "$1" "$BAK_LOCATION"
     bak_ret=$?
@@ -34,12 +62,14 @@ bak() {
     time_diff=$(echo "$end_time - $start_time" | bc)
 
     if [ $bak_ret -eq 0 ]; then
-        log_notify "Backup of $1 complete!\n(took $time_diff)"
+        notify "Backup of $1 complete!\n(took $time_diff)"
     else
-        log_error "Backup of $1 failed.\n(took $time_diff)"
+        notify error "Backup of $1 failed.\n(took $time_diff)"
     fi
 }
 
+# Usage: checks
+# Run preliminary checks. Root user, required programs, and if device mounted.
 checks() {
     # Check for root user
     if [ "$EUID" -ne 0 ]; then
@@ -54,7 +84,7 @@ checks() {
     required_programs=( "tee" "date" "mountpoint" "printf" "rsync" "bc" )
     for p in "${required_programs[@]}"; do
         if ! hash "$p" &>/dev/null; then
-            log_error "$p is required. Program check failed."
+            log error "$p is required. Program check failed."
             exit 1
         fi
     done
@@ -63,23 +93,23 @@ checks() {
     # Check if MNT_LOCATION is mounted
     mountpoint -q $MNT_LOCATION
     if [ $? == 1 ]; then
-        log_error "$MNT_LOCATION is not mounted! Quitting."
+        notify error "$MNT_LOCATION is not mounted! Quitting."
         exit 1
     else
         log "$MNT_LOCATION is mounted."
     fi
 }
 
-### Mainline ###
+## Mainline ##
 checks
 if mkdir $LOCKFILE &>/dev/null; then
-    log "Successfully created lock."
+    log "Created lock."
     bak "/home/ryan/storage"
     bak "/home/ryan/working"
     rmdir $LOCKFILE &&\
-        log       "Successfully removed lock." ||\
-        log_error "Was unable to remove lock."
+        log          "Removed lock." ||\
+        notify error "Was unable to remove lock."
 else
-    log_error "There is already a lock for Backup2Mount.\n\nIf you're sure that it is not already running, you can remove\n/var/lock/Backup2Mount.lock"
+    notify error "There is already a lock for Backup2Mount.\n\nIf you're sure that it is not already running, you can remove\n/var/lock/Backup2Mount.lock"
     exit 1
 fi
