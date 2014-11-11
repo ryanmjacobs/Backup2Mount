@@ -10,6 +10,7 @@
 # August 18, 2014 -> File creation.
 # August 28, 2014 -> Remove function keyword for compatibility with other shells.
 #  Sept. 27, 2014 -> Add QUIET variable. Improve log functions.
+#   Nov. 11, 2014 -> More descriptive "run as root" message.
 #
 # Bugs:
 #   - Running the bash function `bak "/home/user/"` will cause the contents of
@@ -73,7 +74,7 @@ bak() {
 checks() {
     # Check for root user
     if [ "$EUID" -ne 0 ]; then
-        echo "Please run as root."
+        echo "error: you cannot perform this operation unless you are root."
         exit 1
     fi
 
