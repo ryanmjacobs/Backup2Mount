@@ -91,9 +91,9 @@ bak() {
     fi
 }
 
-# Usage: checks
+# Usage: prelim_checks
 # Run preliminary checks. Root user, required programs, and if device mounted.
-checks() {
+prelim_checks() {
     # Check for root user
     if [ "$EUID" -ne 0 ]; then
         echo "error: you cannot perform this operation unless you are root."
@@ -156,8 +156,8 @@ if [ $error == true ]; then
     exit 1
 fi
 
-# preliminary dep. and mount checks
-checks
+# Run preliminary checks: is root user, has required programs, and has device mounted.
+prelim_checks
 
 # create a lock and begin the backup
 if mkdir $LOCKFILE &>/dev/null; then
