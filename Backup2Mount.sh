@@ -46,9 +46,9 @@ help_msg() {
 # Write message to log
 log() {
     if [ $# -ge 2 ] && [ "$1" == "error" ]; then
-        printf "%s - ERROR: %s\n" "$(date +%F_%T)" "$2" | tee -a "$LOGFILE"
+        printf "%s - ERROR: %s\n" "$(date +%F_%T)" "$2" | tee -a "$LOGFILE" 2>/dev/null
     else
-        printf "%s - %s\n" "$(date +%F_%T)" "$1" | tee -a "$LOGFILE"
+        printf "%s - %s\n" "$(date +%F_%T)" "$1" | tee -a "$LOGFILE" 2>/dev/null
     fi
 }
 
