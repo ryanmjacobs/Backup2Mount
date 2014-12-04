@@ -139,7 +139,7 @@ shift $((OPTIND-1))
 
 # get non-option arguments
 mnt_dir=$1; shift 1
-folders_to_bak=$@
+folders_to_backup="$@"
 
 # verify arguments and options
 if [ -z "$mnt_dir" ]; then
