@@ -3,8 +3,9 @@
 # Backup2Mount.sh v1.0
 #
 # Backs up directories to mount locations using rsync and cron.
-# Place script in /etc/cron.daily/.
-# If backup fails, check logfile for errors: /var/log/Backup2Mount.log
+#
+# Place script in /etc/cron.daily/ to run once a day.
+# Check logfile for errors: /var/log/Backup2Mount.log
 #
 # Maintained By: Ryan Jacobs <ryan.mjacobs@gmail.com>
 # August 18, 2014 -> File creation.
@@ -13,9 +14,12 @@
 #   Nov. 11, 2014 -> More descriptive "run as root" message.
 #
 # Bugs:
-#   - Running the bash function `bak "/home/user/"` will cause the contents of
-#     the directory user to backed up and not the whole folder.
-#     This is because of rsync. MAKE SURE TO OMIT EXTRA SLASH.
+#   - (This is an internal bug; if you are a user of this script, don't worry
+#     about it.)
+#     For developers,
+#     Running the bash function `bak "/home/user/"` will cause the contents of
+#     the directory to backed up and not the whole folder. Be sure to omit the
+#     extra slash when adding locations.
 ################################################################################
 
        QUIET=false
