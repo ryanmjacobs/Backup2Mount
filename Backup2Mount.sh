@@ -164,7 +164,8 @@ if mkdir $LOCKFILE &>/dev/null; then
     log "Created lock."
 
     # Backup each input directory
-    for dir in "$folders_to_bak"; do
+    # no quotes around variable *is intentional*
+    for dir in $folders_to_backup; do
         bak "$dir" "$bak_dirname"
     done
 
