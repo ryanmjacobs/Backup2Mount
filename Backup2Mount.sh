@@ -2,7 +2,7 @@
 ################################################################################
 # Backup2Mount.sh v1.2
 #
-# Backs up directories to mount locations using rsync and cron.
+# Back up directories to mount locations using rsync and cron.
 # Check logfile for errors: /var/log/Backup2Mount.log
 #
 # Maintained By: Ryan Jacobs <ryan.mjacobs@gmail.com>
@@ -14,11 +14,33 @@
 #   Dec. 03, 2014 -> Convert the script to use command-line arguments.
 ################################################################################
 
-       QUIET=false
-     LOGFILE="/var/log/Backup2Mount.log"
-    LOCKFILE="/var/lock/Backup2Mount.lock"
-MNT_LOCATION="/mnt/EXT4_Storage/"
-BAK_LOCATION="/mnt/EXT4_Storage/Delta_Home_Backup/"
+# Script Constants
+SCRIPT_NAME=$0
+LOGFILE="/var/log/Backup2Mount.log"
+LOCKFILE="/var/lock/Backup2Mount.lock"
+
+# CLI Default Options
+bak_dirname="Backup2Mount"
+quiet_opt=false
+
+# Usage: help_msg <output_to_stderr>
+# Displays help information
+help_msg() {
+    printf "Back up directories to mount locations.\n"
+    printf "Usage: $SCRIPT_NAME [options...] <mnt_dir> [folders_to_backup...]\n\n"
+
+    printf "  -b BAK_DIRNAME    Name of the destination directory.\n"
+    printf "  -h                Display this help message.\n"
+    printf "  -q                Silence stdout log output.\n"
+    printf "\n"
+
+    printf "Examples:\n"
+    printf "  $SCRIPT_NAME /mnt/bak_drive /home/stuff  Backup /home/stuff to /mnt/bak_drive\n"
+    printf "\n"
+
+    printf "Report bugs to <ryan.mjacobs@gmail.com>\n"
+    exit 1
+}
 
 # Usage: log [error] <message>
 # Write message to log
@@ -43,20 +65,21 @@ notify() {
         log "$string"
     fi
 
-    if ! $QUIET; then
-        notify-send -t 15000 -u $msglevel "Backup2Mount" "$string"
+    if ! $quiet_opt; then
+        notify-send -t 15000 -u $msglevel "$SCRIPT_NAME" "$string"
     fi
 }
 
-# Usage: bak <folder>
-# Backup folder to $BAK_LOCATION
+# Usage: bak <folder> <bak_location>
+# Backup <folder> to <bak_location>
 bak() {
     # if necessary, remove extra slash so we don't screw up rsync
     path=$(echo $1 | sed 's/\/$//g')
+    bak_location=$2
 
     log "Backing up: $path ..."
     start_time=$(date +%s.%N)
-    /usr/bin/rsync -auz --delete "$path" "$BAK_LOCATION"
+    /usr/bin/rsync -auz --delete "$path" "$bak_location"
     bak_ret=$?
     end_time=$(date +%s.%N)
     time_diff=$(echo "$end_time - $start_time" | bc)
@@ -99,13 +122,51 @@ checks() {
         log "$MNT_LOCATION is mounted."
     fi
 }
+########################################
+#             Mainline                 #
+########################################
 
-## Mainline ##
+# get command-line flag arguments
+while getopts "b:hq" opt; do
+    case $opt in
+        b) bak_dirname=$OPTARG ;;
+        q) quiet_opt=true ;;
+
+        h) help_msg ;;
+    esac
+done
+shift $((OPTIND-1))
+
+# get non-option arguments
+mnt_dir=$1; shift 1
+folders_to_bak=$@
+
+# verify arguments and options
+if [ -z "$mnt_dir" ]; then
+    notify error "'mnt_dir' not supplied"
+    error=true
+fi
+if [ -z "$folders_to_backup" ]; then
+    notify error "'folders_to_backup' not supplied"
+    error=true
+fi
+if [ $error == true ]; then
+    notify error "run '$SCRIPT_NAME -h' for help"
+    exit 1
+fi
+
+# preliminary dep. and mount checks
 checks
+
+# create a lock and begin the backup
 if mkdir $LOCKFILE &>/dev/null; then
     log "Created lock."
-    bak "/home/ryan/storage"
-    bak "/home/ryan/working"
+
+    # Backup each input directory
+    for dir in "$folders_to_bak"; do
+        bak "$dir" "$mnt_dir/$bak_dirname"
+    done
+
     rmdir $LOCKFILE &&\
         log          "Removed lock." ||\
         notify error "Was unable to remove lock."
