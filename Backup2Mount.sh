@@ -73,8 +73,8 @@ notify() {
 # Usage: bak <folder> <bak_dirname>
 # Backup <folder> to <bak_dirname>
 bak() {
-    # if necessary, remove extra slash so we don't screw up rsync
-    path=$(echo $1 | sed 's/\/$//g')
+    # remove *all* extra slashes so we don't screw up rsync
+    path=$(echo $1 | sed 's/\/*$//g')
     bak_location=$2
 
     log "Backing up: $path ..."
