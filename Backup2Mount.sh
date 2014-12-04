@@ -1,10 +1,8 @@
 #!/bin/bash
 ################################################################################
-# Backup2Mount.sh v1.1
+# Backup2Mount.sh v1.2
 #
 # Backs up directories to mount locations using rsync and cron.
-#
-# Place script in /etc/cron.daily/ to run once a day.
 # Check logfile for errors: /var/log/Backup2Mount.log
 #
 # Maintained By: Ryan Jacobs <ryan.mjacobs@gmail.com>
@@ -13,6 +11,7 @@
 #  Sept. 27, 2014 -> Add QUIET variable. Improve log functions.
 #   Nov. 11, 2014 -> More descriptive "run as root" message.
 #   Dec. 03, 2014 -> Fix "extra slash on path" bug.
+#   Dec. 03, 2014 -> Convert the script to use command-line arguments.
 ################################################################################
 
        QUIET=false
