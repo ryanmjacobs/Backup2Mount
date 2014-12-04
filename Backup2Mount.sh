@@ -142,6 +142,7 @@ mnt_dir=$1; shift 1
 folders_to_backup="$@"
 
 # verify arguments and options
+error=false
 if [ -z "$mnt_dir" ]; then
     notify error "'mnt_dir' not supplied"
     error=true
