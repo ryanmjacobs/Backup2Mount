@@ -1,6 +1,6 @@
 #!/bin/bash
 ################################################################################
-# Backup2Mount.sh v1.0
+# Backup2Mount.sh v1.1
 #
 # Backs up directories to mount locations using rsync and cron.
 #
@@ -12,14 +12,7 @@
 # August 28, 2014 -> Remove function keyword for compatibility with other shells.
 #  Sept. 27, 2014 -> Add QUIET variable. Improve log functions.
 #   Nov. 11, 2014 -> More descriptive "run as root" message.
-#
-# Bugs:
-#   - (This is an internal bug; if you are a user of this script, don't worry
-#     about it.)
-#     For developers,
-#     Running the bash function `bak "/home/user/"` will cause the contents of
-#     the directory to backed up and not the whole folder. Be sure to omit the
-#     extra slash when adding locations.
+#   Dec. 03, 2014 -> Fix "extra slash on path" bug.
 ################################################################################
 
        QUIET=false
@@ -59,17 +52,20 @@ notify() {
 # Usage: bak <folder>
 # Backup folder to $BAK_LOCATION
 bak() {
-    log "Backing up: $1 ..."
+    # if necessary, remove extra slash so we don't screw up rsync
+    path=$(echo $1 | sed 's/\/$//g')
+
+    log "Backing up: $path ..."
     start_time=$(date +%s.%N)
-    /usr/bin/rsync -auz --delete "$1" "$BAK_LOCATION"
+    /usr/bin/rsync -auz --delete "$path" "$BAK_LOCATION"
     bak_ret=$?
     end_time=$(date +%s.%N)
     time_diff=$(echo "$end_time - $start_time" | bc)
 
     if [ $bak_ret -eq 0 ]; then
-        notify "Backup of $1 complete!\n(took $time_diff)"
+        notify "Backup of $path complete!\n(took $time_diff)"
     else
-        notify error "Backup of $1 failed.\n(took $time_diff)"
+        notify error "Backup of $path failed.\n(took $time_diff)"
     fi
 }
 
