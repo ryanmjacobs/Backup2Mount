@@ -27,7 +27,7 @@ quiet_opt=false
 # Displays help information
 help_msg() {
     printf "Back up directories to mount locations.\n"
-    printf "Usage: $SCRIPT_NAME [options...] <mnt_dir> [folders_to_backup...]\n\n"
+    printf "Usage: $SCRIPT_NAME [options...] <mnt_location> [folders_to_backup...]\n\n"
 
     printf "  -b BAK_DIRNAME    Name of the destination directory.\n"
     printf "  -h                Display this help message.\n"
@@ -79,7 +79,7 @@ bak() {
 
     log "Backing up: $path ..."
     start_time=$(date +%s.%N)
-    /usr/bin/rsync -auz --delete "$path" "$bak_location"
+    /usr/bin/rsync -auz --delete "$path" "$mnt_location/$bak_location"
     bak_ret=$?
     end_time=$(date +%s.%N)
     time_diff=$(echo "$end_time - $start_time" | bc)
@@ -113,13 +113,13 @@ checks() {
     done
     log "Required programs check complete!"
 
-    # Check if MNT_LOCATION is mounted
-    mountpoint -q $MNT_LOCATION
+    # Check if mnt_location is mounted
+    mountpoint -q $mnt_location
     if [ $? == 1 ]; then
-        notify error "$MNT_LOCATION is not mounted! Quitting."
+        notify error "$mnt_location is not mounted! Quitting."
         exit 1
     else
-        log "$MNT_LOCATION is mounted."
+        log "$mnt_location is mounted."
     fi
 }
 ########################################
@@ -138,13 +138,13 @@ done
 shift $((OPTIND-1))
 
 # get non-option arguments
-mnt_dir=$1; shift 1
+mnt_location=$1; shift 1
 folders_to_backup="$@"
 
 # verify arguments and options
 error=false
-if [ -z "$mnt_dir" ]; then
-    notify error "'mnt_dir' not supplied"
+if [ -z "$mnt_location" ]; then
+    notify error "'mnt_location' not supplied"
     error=true
 fi
 if [ -z "$folders_to_backup" ]; then
@@ -165,7 +165,7 @@ if mkdir $LOCKFILE &>/dev/null; then
 
     # Backup each input directory
     for dir in "$folders_to_bak"; do
-        bak "$dir" "$mnt_dir/$bak_dirname"
+        bak "$dir" "$mnt_location"
     done
 
     rmdir $LOCKFILE &&\
