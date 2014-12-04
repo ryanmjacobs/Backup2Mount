@@ -70,8 +70,8 @@ notify() {
     fi
 }
 
-# Usage: bak <folder> <bak_location>
-# Backup <folder> to <bak_location>
+# Usage: bak <folder> <bak_dirname>
+# Backup <folder> to <bak_dirname>
 bak() {
     # if necessary, remove extra slash so we don't screw up rsync
     path=$(echo $1 | sed 's/\/$//g')
@@ -165,7 +165,7 @@ if mkdir $LOCKFILE &>/dev/null; then
 
     # Backup each input directory
     for dir in "$folders_to_bak"; do
-        bak "$dir" "$mnt_location"
+        bak "$dir" "$bak_dirname"
     done
 
     rmdir $LOCKFILE &&\
