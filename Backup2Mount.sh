@@ -15,7 +15,7 @@
 ################################################################################
 
 # Script Constants
-SCRIPT_NAME=$0
+SCRIPT_NAME=$(basename $0)
 LOGFILE="/var/log/Backup2Mount.log"
 LOCKFILE="/var/lock/Backup2Mount.lock"
 
